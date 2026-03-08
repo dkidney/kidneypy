@@ -13,6 +13,9 @@ dependencies = [
     "pandas>=2.3.3",
     "scipy>=1.15.3"
 ]
+authors = [
+  {name="Darren Kidney"}
+]
 
 [project.optional-dependencies]
 test = [
@@ -24,6 +27,3 @@ dev = [
     "mypy"
 ]
 
-authors = [
-  {name="Darren Kidney"}
-]
