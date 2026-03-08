@@ -4,12 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kidneypy"
-version = "0.0.1"
+version = "0.0.2"
 description = "Example Python package"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "pandas>=2.3.3"
+    "numpy>=2.2.6",
+    "pandas>=2.3.3",
+    "scipy>=1.15.3"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=9.0.2",
+    "scikit-learn>=1.7.2"
+]
+dev = [
+    "ruff",
+    "mypy"
 ]
 
 authors = [
