@@ -20,8 +20,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - run: pip install -U pip
-      - run: pip install -e .[dev]
-      - run: pip install build twine
+      - run: pip install -e .[test]
       - run: pytest
+      - run: pip install build twine
       - run: python -m build
       - run: twine check dist/*
