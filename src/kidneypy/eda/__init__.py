@@ -8,14 +8,12 @@ from .pairwise import (
 )
 
 from .univariate import (
-    univariate_glm,
-    univariate_glm_plot,
+    plot_feature,
 )
 
 __all__ = [
     "profile",
     "pairwise_correlation",
     "pairwise_mutual_info",
-    "univariate_glm",
-    "univariate_glm_plot",
+    "plot_feature",
 ]

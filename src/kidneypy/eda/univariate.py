@@ -1,5 +1,6 @@
 import warnings
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
@@ -15,120 +16,154 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 
-def univariate_glm_plot(
+def is_binary(x: pd.Series) -> bool:
+    x = pd.Series(x)
+    return is_integer_dtype(x) and x.dropna().isin([0, 1]).all()
+
+
+def is_categorical(x: pd.Series) -> bool:
+    x = pd.Series(x)
+    return x.dtype in ['object', 'category']
+
+
+def discretize_x(x: pd.Series, nbins: int = 10, quantiles=False, **kwargs) -> pd.Series:
+    if x.dtype in ['object', 'category']:
+        return x
+    if x.nunique() <= nbins:
+        return x.astype('object')
+    if quantiles:
+        return pd.qcut(x, q=nbins, **kwargs)
+    return pd.cut(x, bins=nbins, **kwargs)
+
+
+def plot_feature(
         df: pd.DataFrame, 
         feature_col: str, 
-        target_col: str, 
+        target_col: str = None, 
         family: str | None = None, 
         alpha: float = 0.05,
         discretize: bool = False,
-        nbins: int = 5,
+        nbins: int = 10,
     ) -> tuple[Figure, Axes]:
-    # raise NotImplementedError
+
+    if target_col:
+        # side-by-side plot if target_col supplied
+        fig, ax = plt.subplots(1, 2, figsize=(12.8, 4.8))
+        ax1 = ax[0]
+        ax2 = ax[1]
+    else:
+        # otherwise just plot feature distribution
+        fig, ax1 = plt.subplots(figsize=(6.4, 4.8))
+
+    fig.suptitle(feature_col, fontsize=16)
+
+    # plot feature distribution -------------------------------------------------------------------
+
+    df_copy = df[[feature_col]].copy()
+
+    if discretize:
+        df_copy[feature_col] = discretize_x(df_copy[feature_col], nbins=nbins, quantiles=False)
+
+    if is_categorical(df_copy[feature_col]):
+
+        counts = df_copy[feature_col].value_counts().sort_index()
+        dist = counts / counts.sum()
+        ax1.bar(
+            dist.index.astype(str),
+            dist,
+        )
+        ax1.tick_params(axis='x', labelrotation=90)
+    
+    else:
+
+        ax1.hist(df_copy[feature_col], bins=nbins, density=True)
+
+    title = 'distribution'
+    if discretize: 
+        title += f' (nbins={nbins})'
+    ax1.set_title(title)
+
+    if not target_col:
+        return fig, ax1
+
+    # plot relationship with target ---------------------------------------------------------------
+
+    df_copy = df[[target_col, feature_col]].copy()
+
+    if discretize:
+        df_copy[feature_col] = discretize_x(df_copy[feature_col], nbins=nbins, quantiles=True)
 
     if not family:
         # family = infer_family(y)
-        raise NotImplementedError('infer_family not implemented yet - please supply a value for the family argument, e.g. family="normal", family="binomial"')    
+        raise NotImplementedError(('infer_family not implemented yet - '
+        'please supply a value for the family argument, e.g. family="normal", family="binomial"'))
     if family == 'normal':
         sm_family = sm.families.Gaussian()
     elif family == 'binomial':
+        if not is_binary(df[target_col]):
+            raise ValueError('binary target expected for family "binomial"')
         sm_family = sm.families.Binomial()
     else:
-        raise ValueError('expecting family to be one of "normal" or "binomial"')
-    
-    _ = df[[target_col, feature_col]].copy()
+        raise ValueError(f'invald family {family} - expecting one of "normal" or "binomial"') 
 
-    x_col = feature_col
-    discretized = False
-    if discretize and _[feature_col].dtype not in ['object', 'category']:
-        discretized = True
-        if _[feature_col].nunique() > nbins:
-            x_col = f'{feature_col}_discretized_{nbins}'
-            _.loc[:, x_col] = pd.qcut(_[feature_col], q=nbins)
-        else:
-            _.loc[:, x_col] = _[x_col].astype(str)
-    categorical = _[x_col].dtype in ['object', 'category']
-    # print('data following discretization')
-    # print(_.head())
+    # use Q() convention in case feature names contain spaces
+    # use C() convention for categorical
+    target_col_formula = f'Q("{target_col}")'
+    feature_col_formula = f'Q("{feature_col}")'
 
-    # model = smf.glm(formula=f"{target_col} ~ {feature_col}", data=df, family=sm_family).fit()
-    target_formula_name = f'Q("{target_col}")'
-    feature_formula_name = f'Q("{x_col}")'
-    if categorical:
-        feature_formula_name = f'C({feature_formula_name})'
-    # print(feature_formula_name)
-    null_model = smf.glm(formula=f'{target_formula_name} ~ 1', data=_, family=sm_family).fit()
-    full_model = smf.glm(formula=f'{target_formula_name} ~ {feature_formula_name}', data=_, family=sm_family).fit()
-    #print(full_model.summary())
+    if is_categorical(df_copy[feature_col]):
+        feature_col_formula = f'C({feature_col_formula})'
 
-    lr_stat = 2 * (full_model.llf - null_model.llf)  # log-likelihood difference
-    df_diff = full_model.df_model - null_model.df_model  # difference in number of parameters
-    p_value = stats.chi2.sf(lr_stat, df_diff)
-    # print(f"LR stat: {lr_stat:.3f}, df: {df_diff}, p-value: {p_value:.4f}")
-    # print(p_value)
+    null_model = smf.glm(formula=f'{target_col_formula} ~ 1', data=df_copy, family=sm_family).fit()
+    full_model = smf.glm(formula=f'{target_col_formula} ~ {feature_col_formula}', data=df_copy, family=sm_family).fit()
 
-    _ = _[[x_col]].drop_duplicates().sort_values(x_col).reset_index(drop=True)
-    # print()
-    # print('data to get preds for')
-    # print(_.head())
+    # LR test to get a single p-value for the feature
+    ll_ratio = 2 * (full_model.llf - null_model.llf)  
+    df_diff = full_model.df_model - null_model.df_model  
+    p_value = stats.chi2.sf(2 * ll_ratio, df_diff)
 
+    # distinct values of processed feature col for generating predictions
+    df_distinct = df_copy[[feature_col]].drop_duplicates().sort_values(feature_col).reset_index(drop=True)
+
+    # calculate CIs - temporaily disable RuntimeWarnings
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
-        preds = full_model.get_prediction(_).summary_frame(alpha=alpha)
-    # print()
-    # print('preds')
-    # print(preds.head())
+        preds = full_model.get_prediction(df_distinct).summary_frame(alpha=alpha)
 
-    # print()
-    # print('mean_se')
-    # print(preds['mean_se'])
-    # print(preds['mean_se'][0])
-    # print(np.isclose(preds['mean_se'], 0, atol=1e-05))
+    # fix a peculiar issue with the statsmodels CIs where mean_se=0 and mean_ci is [0, 1]
     zero_se_mask = np.isclose(preds['mean_se'], 0, atol=1e-05)
-    # preds.loc[zero_se_mask, ['mean_ci_lower', 'mean_ci_upper']] = np.nan
     preds.loc[zero_se_mask, ['mean_ci_lower', 'mean_ci_upper']] = preds.loc[zero_se_mask, 'mean']
-    # print()
-    # print('preds')
-    # print(preds.head())
 
-    preds = pd.concat([_, preds], axis=1)#.dropna()
-    # print()
-    # print('preds joined with data')
-    # print(preds.head())
-    # print(preds.dtypes)
+    # append distinct feature values to predictions for plotting
+    preds = pd.concat([df_distinct, preds], axis=1)
 
-    fig, ax = plt.subplots()
-
-    # sort values to ensure smooth lines
-    # preds = preds.sort_values(x_col)
-
-    if categorical:
+    if is_categorical(df_copy[feature_col]):
 
         means = preds["mean"]
         lower = preds["mean_ci_lower"]
         upper = preds["mean_ci_upper"]
         yerr = [means - lower, upper - means]
 
-        ax.bar(
-            preds[x_col].astype(str), 
+        ax2.bar(
+            preds[feature_col].astype(str), 
             preds["mean"], 
             yerr=yerr, 
             capsize=5,
         )
-        plt.xticks(rotation=90)
-    
+        ax2.tick_params(axis='x', labelrotation=90)
+
     else:
 
-        # predicted probability curve
-        ax.plot(
-            preds[x_col],
+        # predicted mean curve
+        ax2.plot(
+            preds[feature_col],
             preds["mean"],
             label="Mean estimate"
         )
 
         # confidence interval shading
-        ax.fill_between(
-            preds[x_col],
+        ax2.fill_between(
+            preds[feature_col],
             preds["mean_ci_lower"],
             preds["mean_ci_upper"],
             alpha=0.25,
@@ -136,67 +171,24 @@ def univariate_glm_plot(
         )
 
         # optional: show observed binary data
-        ax.scatter(
+        ax2.scatter(
             df[feature_col],
             df[target_col],
             alpha=0.4,
             s=25
         )
 
-        # ax.set_ylim(0,1)
-        # ax.legend()
-        ax.legend(bbox_to_anchor=(1, 1), loc="upper left")
+        ax2.legend(bbox_to_anchor=(1, 1), loc="upper left")
         # ax.legend(bbox_to_anchor=(0.5, -0.15), loc="upper center", ncol=2)
 
     if family in ['binomial', 'normal', 'poisson', 'gamma']:
-        ax.axhline(df[target_col].mean(), linestyle=":", color="black")
+        ax2.axhline(df[target_col].mean(), linestyle=":", color="black")
     
-    title = feature_col
-    if discretized: 
-        title += ' (discretized)'
-    fig.suptitle(title, fontsize=16)
-    subtitle = f'{family} GLM (p={p_value:.5f})'
-    ax.set_title(subtitle)
-    ax.set_xlabel(feature_col)
-    ax.set_ylabel(target_col)
+    ax2.set_title(f'{family} GLM (p={p_value:.5f})')
+    ax2.set_ylabel(target_col)
+    fig.suptitle(feature_col, fontsize=16)
 
     return fig, ax
-
-
-def univariate_glm(x: pd.Series, y: pd.Series, alpha=0.05, family: str | None = None) -> pd.DataFrame:
-    """
-    Perform a univariate GLM.
-
-    Args:
-        x (pd.Series): feature variable (any object tyoe that can be coercible to a pandas series)
-        y (pd.Series): target variable (any object tyoe that can be coercible to a pandas series)
-        family (str | None, optional): string indicating the GLM family to use. Defaults to None.
-
-    Raises:
-        NotImplementedError: if family is not supplied
-        ValueError: if family is invalid
-
-    Returns:
-        pd.DataFrame: mean predictions and confidence intervals
-    """    
-    if not family:
-        # family = infer_family(y)
-        raise NotImplementedError('infer_family not implemented yet - please supply a value for the family argument, e.g. family="normal", family="binary"')    
-    if family == 'normal':
-        sm_family = sm.families.Normal()
-    elif family == 'binary':
-        sm_family = sm.families.Binomial()
-    else:
-        raise ValueError('expecting family to be one of "normal" or "binary"')
-    
-    df = pd.DataFrame({'x': x, 'y': y}).copy()
-    model = smf.glm(formula="y ~ x", data=df, family=sm_family).fit()
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
-        preds = model.get_prediction(df).summary_frame(alpha=alpha)
-    preds = pd.concat([df, preds], axis=1)
-    return preds
 
 
 def infer_family(y: pd.Series) -> str:

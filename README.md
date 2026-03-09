@@ -10,7 +10,7 @@ It contains various utility functions to stadardise common tasks and boost produ
 It can be installed directly from github:
 
 ```sh
-pip install git+https://github.com/dkidney/kidneypy.git@v0.0.2
+pip install git+https://github.com/dkidney/kidneypy.git@v0.0.3
 ```
 
 
