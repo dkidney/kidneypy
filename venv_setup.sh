@@ -13,11 +13,11 @@ pip freeze > requirements.txt
 pip install e .
 
 # test package
-pip install -U pip build twine
-python -m build
-twine check dist/*
-# pip install dist/kidneypy-0.0.1-py3-none-any.whl  
-pip install dist/*
-pip install scikit-learn
-pip install pytest
-pytest
+deactivate
+rm -rf test_env && $(pyenv root)/versions/${py_version}/bin/python -m venv test_env && source test_env/bin/activate && pip list
+pip install -U pip build twine  pytest pytest-cov && pip list
+rm -rf dist && python -m build && twine check dist/*
+pip install dist/kidneypy-0.0.2-py3-none-any.whl && pytest --cov=kidneypy
+deactivate
+rm -rf test_env
+source .venv/bin/activate
