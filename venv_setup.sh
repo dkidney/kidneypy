@@ -46,4 +46,9 @@ source .venv/bin/activate
 
 # new tag -----------------------------------------------------------------------------------------
 
+git status
+git add --all
+git commit -m ${new_version}
+git push
+
 git tag ${new_version} && git push origin ${new_version}

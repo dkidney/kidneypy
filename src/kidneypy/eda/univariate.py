@@ -47,7 +47,8 @@ def plot_feature(
     # plot feature distribution -------------------------------------------------------------------
 
     if as_category:
-        df_copy[feature_col] = df_copy[feature_col].astype(str)
+        # df_copy[feature_col] = df_copy[feature_col].astype(str)
+        df_copy[feature_col] = pd.Categorical(df_copy[feature_col])
 
     if is_numeric_dtype(df_copy[feature_col]) and log:
         old_col = df_copy.columns[-1]
@@ -210,7 +211,7 @@ def plot_feature(
         # ax.legend(bbox_to_anchor=(0.5, -0.15), loc="upper center", ncol=2)
 
     if family in ['binomial', 'normal', 'poisson', 'gamma']:
-        ax2.axhline(df[target_col].mean(), linestyle=":", color="black")
+        ax2.axhline(df_copy.dropna(subset=df_copy.columns[-1])[target_col].mean(), linestyle=":", color="black")
     
     ax2.set_title(f'{family} GLM (p={p_value:.5f})')
     ax2.set_ylabel(target_col)
@@ -229,12 +230,25 @@ def as_binary(x: pd.Series) -> bool:
     if is_binary(x):
         return x
     uniques = sorted(x.dropna().unique())
+    n_uniques = len(uniques)
+    if n_uniques != 2:
+        raise ValueError(f'expecting 2 unique values: x has {n_uniques} uniques')
     return x.map(dict(zip(uniques, [0, 1]))).astype(float)
 
 
 def is_categorical(x: pd.Series) -> bool:
     x = pd.Series(x)
     return x.dtype in ['object', 'category']
+
+
+# def as_category(x: pd.Series) -> bool:
+#     x = pd.Series(x)
+#     if x.dtype == 'category':
+#         return x
+#     uniques = sorted(x.dropna().unique())
+
+    
+#     return x.dtype in ['object', 'category']
 
 
 def is_discrete(x: pd.Series) -> bool:
