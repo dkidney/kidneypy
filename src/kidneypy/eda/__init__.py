@@ -1,5 +1,5 @@
 from .profile import (
-    profile,
+    profile_df,
 )
 
 from .pairwise import (
@@ -12,7 +12,7 @@ from .univariate import (
 )
 
 __all__ = [
-    "profile",
+    "profile_df",
     "pairwise_correlation",
     "pairwise_mutual_info",
     "plot_feature",

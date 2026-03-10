@@ -3,13 +3,13 @@ import pandas as pd
 from sklearn.datasets import load_iris
 
 from kidneypy.eda import (
-    profile,
+    profile_df,
     # infer_family,
 )
 
 def test_profile():
     iris = load_iris(as_frame=True)
-    prof = profile(iris.frame)
+    prof = profile_df(iris.frame)
     assert prof.shape[0] == iris.frame.shape[1]
 
 

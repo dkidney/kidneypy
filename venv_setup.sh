@@ -21,9 +21,11 @@ pip freeze > requirements.txt
 
 # install package from source ---------------------------------------------------------------------
 
-pip install e .
+pip install e . && pytest --cov=kidneypy
 
 # test package ------------------------------------------------------------------------------------
+
+new_version=v0.0.4 && echo ${new_version}
 
 deactivate &&\
 rm -rf test_env &&\
@@ -35,9 +37,13 @@ pip list
 rm -rf dist &&\
 python -m build &&\
 twine check dist/* &&\
-pip install dist/kidneypy-0.0.3-py3-none-any.whl &&\
+pip install dist/kidneypy-${new_version}-py3-none-any.whl &&\
 pytest --cov=kidneypy
 
 deactivate &&\
 rm -rf test_env &&\
 source .venv/bin/activate
+
+# new tag -----------------------------------------------------------------------------------------
+
+git tag ${new_version} && git push origin ${new_version}

@@ -16,82 +16,109 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 
-def is_binary(x: pd.Series) -> bool:
-    x = pd.Series(x)
-    return is_integer_dtype(x) and x.dropna().isin([0, 1]).all()
-
-
-def is_categorical(x: pd.Series) -> bool:
-    x = pd.Series(x)
-    return x.dtype in ['object', 'category']
-
-
-def discretize_x(x: pd.Series, nbins: int = 10, quantiles=False, **kwargs) -> pd.Series:
-    if x.dtype in ['object', 'category']:
-        return x
-    if x.nunique() <= nbins:
-        return x.astype('object')
-    if quantiles:
-        return pd.qcut(x, q=nbins, **kwargs)
-    return pd.cut(x, bins=nbins, **kwargs)
-
-
 def plot_feature(
         df: pd.DataFrame, 
         feature_col: str, 
         target_col: str = None, 
         family: str | None = None, 
         alpha: float = 0.05,
+        as_category: bool = False,
+        explicit_na: bool = False,
+        log: bool = False,
         discretize: bool = False,
         nbins: int = 10,
-    ) -> tuple[Figure, Axes]:
+    ) -> tuple[Figure, Axes]:    
+
+    # as_category overrides discretize
+    discretize = False if as_category else discretize
 
     if target_col:
         # side-by-side plot if target_col supplied
         fig, ax = plt.subplots(1, 2, figsize=(12.8, 4.8))
         ax1 = ax[0]
         ax2 = ax[1]
+        df_copy = df[[target_col, feature_col]].copy()
     else:
-        # otherwise just plot feature distribution
         fig, ax1 = plt.subplots(figsize=(6.4, 4.8))
+        df_copy = df[[feature_col]].copy()
 
-    fig.suptitle(feature_col, fontsize=16)
+    feature_col_obs = feature_col
 
     # plot feature distribution -------------------------------------------------------------------
 
-    df_copy = df[[feature_col]].copy()
+    if as_category:
+        df_copy[feature_col] = df_copy[feature_col].astype(str)
+
+    if is_numeric_dtype(df_copy[feature_col]) and log:
+        old_col = df_copy.columns[-1]
+        new_col = f'log({old_col})'
+        df_copy[new_col] = np.log(df_copy[old_col])
+        feature_col_obs = new_col
 
     if discretize:
-        df_copy[feature_col] = discretize_x(df_copy[feature_col], nbins=nbins, quantiles=False)
+        old_col = df_copy.columns[-1]
+        new_col = f'{old_col} cut({nbins})'
+        df_copy[new_col] = discretize_x(df_copy[old_col], nbins=nbins, quantiles=False)
 
-    if is_categorical(df_copy[feature_col]):
+    if is_categorical(df_copy[df_copy.columns[-1]]) and explicit_na:
+        df_copy[df_copy.columns[-1]].fillna('MISSING')
 
-        counts = df_copy[feature_col].value_counts().sort_index()
+    # print(df_copy.head())
+
+    if is_discrete(df_copy[df_copy.columns[-1]]):
+
+        counts = df_copy[df_copy.columns[-1]].value_counts(dropna=False).sort_index()
         dist = counts / counts.sum()
         ax1.bar(
             dist.index.astype(str),
             dist,
         )
-        ax1.tick_params(axis='x', labelrotation=90)
+        ax1.tick_params(axis='x', labelrotation=90 if discretize else 0)
+        ax1.set_ylabel('probability')
     
     else:
 
-        ax1.hist(df_copy[feature_col], bins=nbins, density=True)
+        ax1.hist(df_copy[df_copy.columns[-1]], bins=nbins, density=True)
+        ax1.set_ylabel('density')
 
-    title = 'distribution'
-    if discretize: 
-        title += f' (nbins={nbins})'
-    ax1.set_title(title)
+    # main_title = feature_col
+    # if logged:
+    #     main_title += ' (log)'
+    fig.suptitle(feature_col, fontsize=16)
+
+    # title = 'distribution'
+    # if discretize: 
+    #     title += f' (nbins={nbins})'
+    ax1.set_title('distribution')
+    ax1.set_xlabel(df_copy.columns[-1])
 
     if not target_col:
         return fig, ax1
-
+    
     # plot relationship with target ---------------------------------------------------------------
 
-    df_copy = df[[target_col, feature_col]].copy()
+    df_copy = df_copy.dropna(subset=[target_col])
+
+    # df_copy = df[[target_col, feature_col]].copy().dropna(subset=[target_col])
+    # feature_col_obs = feature_col
+
+    # if as_category:
+    #     df_copy[feature_col] = df_copy[feature_col].astype(str)
+
+    # if is_numeric_dtype(df_copy[feature_col]) and log:
+    #     old_col = df_copy.columns[-1]
+    #     new_col = f'log({old_col})'
+    #     df_copy[new_col] = np.log(df_copy[old_col])
 
     if discretize:
-        df_copy[feature_col] = discretize_x(df_copy[feature_col], nbins=nbins, quantiles=True)
+        old_col = feature_col_obs
+        new_col = f'{old_col} qcut ({nbins})'
+        df_copy[new_col] = discretize_x(df_copy[old_col], nbins=nbins, quantiles=True)
+
+    if is_categorical(df_copy[df_copy.columns[-1]]) and explicit_na:
+        df_copy[df_copy.columns[-1]].fillna('MISSING')
+
+    # print(df_copy.head())
 
     if not family:
         # family = infer_family(y)
@@ -100,8 +127,9 @@ def plot_feature(
     if family == 'normal':
         sm_family = sm.families.Gaussian()
     elif family == 'binomial':
-        if not is_binary(df[target_col]):
-            raise ValueError('binary target expected for family "binomial"')
+        df_copy[target_col] = as_binary(df_copy[target_col])
+        # if not is_binary(df[target_col]):
+        #     raise ValueError('binary target expected for family "binomial"')
         sm_family = sm.families.Binomial()
     else:
         raise ValueError(f'invald family {family} - expecting one of "normal" or "binomial"') 
@@ -109,9 +137,9 @@ def plot_feature(
     # use Q() convention in case feature names contain spaces
     # use C() convention for categorical
     target_col_formula = f'Q("{target_col}")'
-    feature_col_formula = f'Q("{feature_col}")'
+    feature_col_formula = f'Q("{df_copy.columns[-1]}")'
 
-    if is_categorical(df_copy[feature_col]):
+    if is_discrete(df_copy[df_copy.columns[-1]]):
         feature_col_formula = f'C({feature_col_formula})'
 
     null_model = smf.glm(formula=f'{target_col_formula} ~ 1', data=df_copy, family=sm_family).fit()
@@ -123,7 +151,7 @@ def plot_feature(
     p_value = stats.chi2.sf(2 * ll_ratio, df_diff)
 
     # distinct values of processed feature col for generating predictions
-    df_distinct = df_copy[[feature_col]].drop_duplicates().sort_values(feature_col).reset_index(drop=True)
+    df_distinct = df_copy[[df_copy.columns[-1]]].drop_duplicates().sort_values(df_copy.columns[-1]).reset_index(drop=True)
 
     # calculate CIs - temporaily disable RuntimeWarnings
     with warnings.catch_warnings():
@@ -137,7 +165,7 @@ def plot_feature(
     # append distinct feature values to predictions for plotting
     preds = pd.concat([df_distinct, preds], axis=1)
 
-    if is_categorical(df_copy[feature_col]):
+    if is_discrete(df_copy[df_copy.columns[-1]]):
 
         means = preds["mean"]
         lower = preds["mean_ci_lower"]
@@ -145,35 +173,35 @@ def plot_feature(
         yerr = [means - lower, upper - means]
 
         ax2.bar(
-            preds[feature_col].astype(str), 
+            preds[df_copy.columns[-1]].astype(str), 
             preds["mean"], 
             yerr=yerr, 
             capsize=5,
         )
-        ax2.tick_params(axis='x', labelrotation=90)
+        ax2.tick_params(axis='x', labelrotation=90 if discretize else 0)
 
     else:
 
         # predicted mean curve
         ax2.plot(
-            preds[feature_col],
+            preds[df_copy.columns[-1]],
             preds["mean"],
             label="Mean estimate"
         )
 
         # confidence interval shading
         ax2.fill_between(
-            preds[feature_col],
+            preds[df_copy.columns[-1]],
             preds["mean_ci_lower"],
             preds["mean_ci_upper"],
             alpha=0.25,
             label=f"Mean {1-alpha:.0%} CI"
         )
 
-        # optional: show observed binary data
+        # optional: show observed data
         ax2.scatter(
-            df[feature_col],
-            df[target_col],
+            df_copy[feature_col_obs],
+            df_copy[target_col],
             alpha=0.4,
             s=25
         )
@@ -186,9 +214,42 @@ def plot_feature(
     
     ax2.set_title(f'{family} GLM (p={p_value:.5f})')
     ax2.set_ylabel(target_col)
-    fig.suptitle(feature_col, fontsize=16)
+    ax2.set_xlabel(df_copy.columns[-1])
 
     return fig, ax
+
+
+def is_binary(x: pd.Series) -> bool:
+    x = pd.Series(x)
+    return is_integer_dtype(x) and x.dropna().isin([0, 1]).all()
+
+
+def as_binary(x: pd.Series) -> bool:
+    x = pd.Series(x)
+    if is_binary(x):
+        return x
+    uniques = sorted(x.dropna().unique())
+    return x.map(dict(zip(uniques, [0, 1]))).astype(float)
+
+
+def is_categorical(x: pd.Series) -> bool:
+    x = pd.Series(x)
+    return x.dtype in ['object', 'category']
+
+
+def is_discrete(x: pd.Series) -> bool:
+    x = pd.Series(x)
+    return x.dtype in ['object', 'category', 'bool']
+
+
+def discretize_x(x: pd.Series, nbins: int = 10, quantiles=False) -> pd.Series:
+    if is_discrete(x):
+        return x
+    if x.nunique() <= nbins:
+        return x.astype('str')
+    if quantiles:
+        return pd.qcut(x, q=nbins, duplicates='drop')
+    return pd.cut(x, bins=nbins, duplicates='drop')
 
 
 def infer_family(y: pd.Series) -> str:

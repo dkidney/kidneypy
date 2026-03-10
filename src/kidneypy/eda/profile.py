@@ -5,47 +5,16 @@ import numpy as np
 import pandas as pd
 
 
-def mode_var(x: pd.Series, dropna=True) -> pd.Series:
-    _ = deepcopy(x)
-    if dropna:
-        _ = _.dropna()
-    n = len(_)
-    if n == 0:
-        return [], None, None
-    _ = _.value_counts(dropna=False)
-    n_mode = _.max()
-    _ = _[_ == n_mode]
-    return _.index.to_list(), n_mode, n_mode / n
-
-
-def mode_df(df: pd.DataFrame) -> pd.DataFrame:
-    _ = [mode_var(df[x]) for x in df]
-    _ = pd.DataFrame(_, columns=['mode', 'n_mode', 'p_mode'], index=df.columns)
-    return _
-
-
-def any_inf_df(df: pd.DataFrame) -> pd.DataFrame:
-    df_numeric = df.select_dtypes('number')
-    _ = [(~np.isfinite(df[x].dropna())).any() for x in df_numeric]
-    _ = pd.DataFrame(_, columns=['any_inf'], index=df_numeric.columns)
-    return _
-
-
-def flag(prof: pd.DataFrame, mask: pd.Series, message='') -> None:
-    features = prof.index[mask].to_list()
-    if len(features) > 0:
-        print('flag', message, ':', ', '.join(features))
-
-
-def profile(df: pd.DataFrame, flags=True) -> pd.DataFrame:
-    """_summary_
+def profile_df(df: pd.DataFrame, flags=True) -> pd.DataFrame:
+    """
+    Profile a data frame.
 
     Args:
-        df (pd.DataFrame): _description_
-        flags (bool, optional): _description_. Defaults to True.
+        df (pd.DataFrame): dataframe to profile
+        flags (bool, optional): if True, prints messages about possible issues. Defaults to True.
 
     Returns:
-        pd.DataFrame: _description_
+        pd.DataFrame: A data frame with column names as rows and profile stats as columns.
     """    
 
     n = df.shape[0]
@@ -94,3 +63,35 @@ def profile(df: pd.DataFrame, flags=True) -> pd.DataFrame:
         flag(_, (_['type'].isin(['object', 'category'])) & (_['n_unique'] > 30), message='high cardinality')        
 
     return _
+
+
+def mode_var(x: pd.Series, dropna=True) -> pd.Series:
+    _ = deepcopy(x)
+    if dropna:
+        _ = _.dropna()
+    n = len(_)
+    if n == 0:
+        return [], None, None
+    _ = _.value_counts(dropna=False)
+    n_mode = _.max()
+    _ = _[_ == n_mode]
+    return _.index.to_list(), n_mode, n_mode / n
+
+
+def mode_df(df: pd.DataFrame) -> pd.DataFrame:
+    _ = [mode_var(df[x]) for x in df]
+    _ = pd.DataFrame(_, columns=['mode', 'n_mode', 'p_mode'], index=df.columns)
+    return _
+
+
+def any_inf_df(df: pd.DataFrame) -> pd.DataFrame:
+    df_numeric = df.select_dtypes('number')
+    _ = [(~np.isfinite(df[x].dropna())).any() for x in df_numeric]
+    _ = pd.DataFrame(_, columns=['any_inf'], index=df_numeric.columns)
+    return _
+
+
+def flag(prof: pd.DataFrame, mask: pd.Series, message='') -> None:
+    features = prof.index[mask].to_list()
+    if len(features) > 0:
+        print('flag', message, ':', ', '.join(features))
