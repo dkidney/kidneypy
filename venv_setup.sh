@@ -25,14 +25,15 @@ pip install e . && pytest --cov=kidneypy
 
 # test package ------------------------------------------------------------------------------------
 
-new_version=v0.0.4 && echo ${new_version}
-
 deactivate &&\
 rm -rf test_env &&\
 $(pyenv root)/versions/${py_version}/bin/python -m venv test_env &&\
 source test_env/bin/activate &&\
 pip install -U pip build twine  pytest pytest-cov &&\
 pip list
+
+new_version=0.0.6 &&\
+echo ${new_version}
 
 rm -rf dist &&\
 python -m build &&\
@@ -46,9 +47,9 @@ source .venv/bin/activate
 
 # new tag -----------------------------------------------------------------------------------------
 
-git status
-git add --all
-git commit -m ${new_version}
-git push
+new_tag=v${new_version} && echo ${new_tag}
 
-git tag ${new_version} && git push origin ${new_version}
+git status
+git add --all && git commit -m 'explicit na fix' && git push
+
+git tag ${new_tag} && git push origin ${new_tag}

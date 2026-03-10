@@ -48,9 +48,10 @@ def plot_feature(
 
     if as_category:
         # df_copy[feature_col] = df_copy[feature_col].astype(str)
-        df_copy[feature_col] = pd.Categorical(df_copy[feature_col])
+        # df_copy[feature_col] = pd.Categorical(df_copy[feature_col])
+        df_copy[feature_col] = as_categorical(df_copy[feature_col], explicit_na=explicit_na)
 
-    if is_numeric_dtype(df_copy[feature_col]) and log:
+    if log and is_numeric_dtype(df_copy[feature_col]):
         old_col = df_copy.columns[-1]
         new_col = f'log({old_col})'
         df_copy[new_col] = np.log(df_copy[old_col])
@@ -61,7 +62,7 @@ def plot_feature(
         new_col = f'{old_col} cut({nbins})'
         df_copy[new_col] = discretize_x(df_copy[old_col], nbins=nbins, quantiles=False)
 
-    if is_categorical(df_copy[df_copy.columns[-1]]) and explicit_na:
+    if explicit_na and is_categorical(df_copy[df_copy.columns[-1]]):
         df_copy[df_copy.columns[-1]].fillna('MISSING')
 
     # print(df_copy.head())
@@ -116,7 +117,7 @@ def plot_feature(
         new_col = f'{old_col} qcut ({nbins})'
         df_copy[new_col] = discretize_x(df_copy[old_col], nbins=nbins, quantiles=True)
 
-    if is_categorical(df_copy[df_copy.columns[-1]]) and explicit_na:
+    if explicit_na and is_categorical(df_copy[df_copy.columns[-1]]):
         df_copy[df_copy.columns[-1]].fillna('MISSING')
 
     # print(df_copy.head())
@@ -143,8 +144,8 @@ def plot_feature(
     if is_discrete(df_copy[df_copy.columns[-1]]):
         feature_col_formula = f'C({feature_col_formula})'
 
-    null_model = smf.glm(formula=f'{target_col_formula} ~ 1', data=df_copy, family=sm_family).fit()
-    full_model = smf.glm(formula=f'{target_col_formula} ~ {feature_col_formula}', data=df_copy, family=sm_family).fit()
+    null_model = smf.glm(formula=f'{target_col_formula} ~ 1', data=df_copy.dropna(), family=sm_family).fit()
+    full_model = smf.glm(formula=f'{target_col_formula} ~ {feature_col_formula}', data=df_copy.dropna(), family=sm_family).fit()
 
     # LR test to get a single p-value for the feature
     ll_ratio = 2 * (full_model.llf - null_model.llf)  
@@ -241,14 +242,13 @@ def is_categorical(x: pd.Series) -> bool:
     return x.dtype in ['object', 'category']
 
 
-# def as_category(x: pd.Series) -> bool:
-#     x = pd.Series(x)
-#     if x.dtype == 'category':
-#         return x
-#     uniques = sorted(x.dropna().unique())
-
-    
-#     return x.dtype in ['object', 'category']
+def as_categorical(x: pd.Series, explicit_na=False):
+    x = pd.Series(x)
+    x = pd.Categorical(x)
+    if explicit_na:
+        x = x.add_categories(['MISSING'])
+        x = x.fillna('MISSING')
+    return x
 
 
 def is_discrete(x: pd.Series) -> bool:
