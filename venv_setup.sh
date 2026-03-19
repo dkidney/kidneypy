@@ -32,7 +32,7 @@ source test_env/bin/activate &&\
 pip install -U pip build twine  pytest pytest-cov &&\
 pip list
 
-new_version=0.0.6 &&\
+new_version=0.0.7 &&\
 echo ${new_version}
 
 rm -rf dist &&\
@@ -47,9 +47,8 @@ source .venv/bin/activate
 
 # new tag -----------------------------------------------------------------------------------------
 
-new_tag=v${new_version} && echo ${new_tag}
-
 git status
 git add --all && git commit -m 'explicit na fix' && git push
 
+new_tag=v${new_version} && echo ${new_tag}
 git tag ${new_tag} && git push origin ${new_tag}

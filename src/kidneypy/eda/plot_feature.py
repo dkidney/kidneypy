@@ -27,6 +27,7 @@ def plot_feature(
         log: bool = False,
         discretize: bool = False,
         nbins: int = 10,
+        rot: int = 0,
     ) -> tuple[Figure, Axes]:    
 
     # as_category overrides discretize
@@ -93,6 +94,7 @@ def plot_feature(
     #     title += f' (nbins={nbins})'
     ax1.set_title('distribution')
     ax1.set_xlabel(df_copy.columns[-1])
+    ax1.tick_params(axis='x', labelrotation=rot)
 
     if not target_col:
         return fig, ax1
@@ -217,6 +219,8 @@ def plot_feature(
     ax2.set_title(f'{family} GLM (p={p_value:.5f})')
     ax2.set_ylabel(target_col)
     ax2.set_xlabel(df_copy.columns[-1])
+    ax2.tick_params(axis='x', labelrotation=rot)
+
 
     return fig, ax
 

@@ -70,23 +70,22 @@ def pairwise_mutual_info(X: pd.DataFrame, y: pd.Series, nbins=10) -> pd.DataFram
         pd.DataFrame: symmetric normalized MI matrix with values in [0,1]
     """
 
-    X_copy = deepcopy(X)
     y_copy = deepcopy(y)
-
-    if y_copy.nunique() > nbins:
+    if y.nunique() > nbins:
         y_copy = pd.qcut(y_copy, q=nbins, duplicates='drop')
     y_copy = y_copy.astype(str)
 
     mi = []
-    for col in X_copy:
-        x = X_copy[col]
-        if x.dtype not in ['object', 'category']:
-            if x.nunique() > nbins:
-                x = pd.qcut(x, q=nbins, duplicates='drop')
-            x = x.astype(str)
+    for col in X:
+        x_copy = deepcopy(X[col])
+        if x_copy.dtype not in ['object', 'category']:
+            if x_copy.nunique() > nbins:
+                x_copy = pd.qcut(x_copy, q=nbins, duplicates='drop')
+            x_copy = x_copy.astype(str)
+        i = ~y_copy.isna() & ~x_copy.isna()
         mi.append({
             'col': col,
-            'mi': adjusted_mutual_info_score(y_copy, x)
+            'mi': adjusted_mutual_info_score(y_copy[i], x_copy[i])
         })
 
     mi = pd.DataFrame(mi)

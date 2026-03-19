@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def profile_df(df: pd.DataFrame, flags=True) -> pd.DataFrame:
+def profile_features(df: pd.DataFrame, flags=True) -> pd.DataFrame:
     """
     Profile a data frame.
 
