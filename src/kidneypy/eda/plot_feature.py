@@ -28,6 +28,7 @@ def plot_feature(
         discretize: bool = False,
         nbins: int = 10,
         rot: int = 0,
+        figsize = None,
     ) -> tuple[Figure, Axes]:    
 
     # as_category overrides discretize
@@ -35,12 +36,14 @@ def plot_feature(
 
     if target_col:
         # side-by-side plot if target_col supplied
-        fig, ax = plt.subplots(1, 2, figsize=(12.8, 4.8))
+        figsize = figsize if figsize else (12.8, 4.8)
+        fig, ax = plt.subplots(1, 2, figsize=figsize)
         ax1 = ax[0]
         ax2 = ax[1]
         df_copy = df[[target_col, feature_col]].copy()
     else:
-        fig, ax1 = plt.subplots(figsize=(6.4, 4.8))
+        figsize = figsize if figsize else (6.4, 4.8)
+        fig, ax1 = plt.subplots(figsize=figsize)
         df_copy = df[[feature_col]].copy()
 
     feature_col_obs = feature_col

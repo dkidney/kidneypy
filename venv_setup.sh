@@ -36,6 +36,7 @@ new_version=0.0.7 &&\
 echo ${new_version}
 
 rm -rf dist &&\
+rm -rf build &&\
 python -m build &&\
 twine check dist/* &&\
 pip install dist/kidneypy-${new_version}-py3-none-any.whl &&\
@@ -48,7 +49,7 @@ source .venv/bin/activate
 # new tag -----------------------------------------------------------------------------------------
 
 git status
-git add --all && git commit -m 'explicit na fix' && git push
+git add --all && git commit -m 'replace_na and rot' && git push
 
 new_tag=v${new_version} && echo ${new_tag}
 git tag ${new_tag} && git push origin ${new_tag}
