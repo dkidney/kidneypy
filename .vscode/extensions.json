@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-toolsai.jupyter",
+    "charliermarsh.ruff",
+    "tamasfe.even-better-toml",
+    "aaron-bond.better-comments",
+    "github.vscode-github-actions",
+    "mechatroner.rainbow-csv",
+    "redhat.vscode-yaml",
+    "njpwerner.autodocstring",
+    // "ms-toolsai.datawrangler",
+  ]
+}

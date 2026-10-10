@@ -1,0 +1,193 @@
+{
+    // =============================================================================================
+    // EDITOR
+    // =============================================================================================
+
+    // INDENTATION, FORMATTING AND READABILITY --------------------------------
+
+    "editor.autoIndent": "keep", // Keep existing indentation when pressing Enter. Default: "keep".
+    "editor.bracketPairColorization.enabled": true, // Colour matching brackets. Default: true.
+    // "editor.fontFamily": "'JetBrains Mono', Consolas, monospace", // Editor font; JetBrains Mono must be installed. Default: platform-dependent.
+    // "editor.fontLigatures": true, // Enable programming font ligatures. Default: false.
+    // "editor.fontSize": 12, // Editor font size in pixels. Default: 14.
+    "editor.formatOnPaste": true, // Do not automatically format pasted code. Default: false.
+    // "editor.formatOnSave": true, // Automatically format files on save. Default: false.
+    // "editor.guides.bracketPairs": "active", // Show guides for active bracket pairs. Default: true.
+    "editor.insertSpaces": true, // Use spaces instead of tabs. Default: true.
+    // "editor.lineHeight": 18, // Editor line height in pixels; 0 means automatic. Default: 0.
+    "editor.minimap.enabled": true, // Show the code minimap. Default: true.
+    // "editor.minimap.renderCharacters": false, // Simplify minimap rendering. Default: true.
+    "editor.minimap.scale": 1, // Minimap scale factor. Default: 1.
+    "editor.renderControlCharacters": true, // Display control characters. Default: true.
+    "editor.renderLineHighlight": "line", // Highlight the current line. Default: "line".
+    "editor.renderValidationDecorations": "on", // Show diagnostic underlines. Default: "on".
+    "editor.renderWhitespace": "selection", // Show whitespace markers in selected text. Default: "selection".
+    "editor.rulers": [100], // Show a vertical ruler at column 100. Default: [].
+    "editor.semanticHighlighting.enabled": true, // Enable semantic highlighting where supported. Default: theme-dependent.
+    "editor.stickyScroll.enabled": true, // Keep enclosing code context visible while scrolling. Default: true.
+    "editor.stickyScroll.maxLineCount": 5, // Maximum sticky-scroll lines. Default: 5.
+    "editor.tabSize": 4, // Spaces per indentation level. Default: 4.
+    "editor.wordWrap": "off", // Wrap long lines within the editor. Default: "off".
+    "editor.wrappingIndent": "indent", // Indent wrapped lines. Default: "same".
+
+    // CODE COMPLETIONS -------------------------------------------------------
+
+    "editor.quickSuggestions": {
+        "comments": "off", // Suggestions in comments. Default: "off".
+        "other": "on", // Suggestions in ordinary code. Default: "on".
+        "strings": "on" // Suggestions inside strings. Default: "off".
+    },
+
+    // =============================================================================================
+    // EXTENSIONS
+    // =============================================================================================
+
+    "extensions.autoUpdate": "onlyEnabledExtensions", // Automatically update extensions. Default: true.
+
+    // =============================================================================================
+    // EXPLORER
+    // =============================================================================================
+
+    "explorer.autoReveal": false, // Do not automatically reveal files in the Explorer. Default: true.
+    "explorer.confirmDelete": false, // Disable delete confirmation dialog. Default: true.
+    "explorer.confirmDragAndDrop": false, // Disable drag-and-drop confirmation dialog. Default: true.
+    "explorer.excludeGitIgnore": false, // Show files ignored by Git in the Explorer. Default: false.
+
+    // =============================================================================================
+    // FILES
+    // =============================================================================================
+
+    // SAVING AND WHITESPACE --------------------------------------------------
+
+    //"files.autoSave": "afterDelay", // Automatically save files after a delay. Default: "off".
+    //"files.autoSaveDelay": 1000, // Delay in milliseconds before auto-saving. Default: 1000.
+    "files.insertFinalNewline": true, // Ensure files end with a newline. Default: false.
+    "files.trimTrailingWhitespace": true, // Remove trailing whitespace on save. Default: false.
+
+    // FILE EXPLORER HIDE GENERATED FILES ------------------------------------
+
+    "files.exclude": {
+        "**/.ipynb_checkpoints": true, // Hide Jupyter checkpoints.
+        "**/.pytest_cache": true, // Hide pytest cache.
+        "**/.ruff_cache": true, // Hide Ruff cache.
+        "**/__pycache__": true // Hide Python bytecode caches.
+    }, // Additional Explorer exclusions; does not delete or Git-ignore files.
+
+    // FILE WATCHING PERFORMANCE ---------------------------------------------
+
+    "files.watcherExclude": {
+        "**/.git/objects/**": true, // Avoid watching Git's internal object database.
+        "**/.venv/**": true, // Avoid watching virtual environment files.
+        "**/data/**": true // Avoid watching datasets; external changes may not be detected.
+    }, // Additional watcher exclusions; built-in exclusions also apply.
+
+    // =============================================================================================
+    // PYTHON
+    // =============================================================================================
+
+    // INTERPRETER AND LANGUAGE ANALYSIS --------------------------------------
+
+    "python.analysis.autoImportCompletions": true, // Suggest imports automatically. Default: true.
+    "python.analysis.exclude": [
+        "**/.venv", // Exclude virtual environment files from analysis.
+        "**/__pycache__", // Exclude Python bytecode caches.
+        "**/build", // Exclude generated build output.
+        "**/dist" // Exclude distribution output.
+    ], // Additional analysis exclusions. Default: [].
+    "python.analysis.typeCheckingMode": "basic", // Pylance type checking: "off", "basic", "standard" or "strict", depending on version. Default: "off".
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python", // Initial project interpreter path; does not override an existing selection. Default: "".
+
+    // RUFF FORMATTING AND LINTING --------------------------------------------
+
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "never", // Do not apply automatic fixes on save. Default: not configured.
+            "source.organizeImports": "never" // Do not organise imports on save. Default: not configured.
+        },
+        "editor.defaultFormatter": "charliermarsh.ruff", // Use Ruff to format Python files; requires the Ruff extension.
+        "editor.formatOnSave": false, // Do not format Python files automatically on save. Default: false.
+        "editor.insertSpaces": true, // Use spaces instead of tabs for Python files. Default: true.
+        "editor.tabSize": 4, // Use 4 spaces per indentation level for Python files. Default: 4.
+    },
+    "ruff.lint.enable": false, // Disable Ruff lint diagnostics. Default: true in the Ruff extension.
+
+    // =============================================================================================
+    // JUPYTER & NOTEBOOKS
+    // =============================================================================================
+
+    "jupyter.interactiveWindow.creationMode": "perFile", // Create interactive windows per file. Default: extension/version-dependent.
+    // "notebook.cellToolbarLocation": {
+    //    "default": "right", // left, right, hidden
+    // }, // Notebook cell toolbar location; default is "right".
+    // "notebook.consolidatedOutputButton": false, // Show a single button to clear all outputs. Default: false.
+    // "notebook.compactView": false, // Use a compact notebook view. Default: false.
+    "notebook.lineNumbers": "on", // Show notebook cell line numbers. Default: "off".
+    "notebook.output.scrolling": true, // Allow long outputs to scroll. Default: false.
+    "notebook.output.textLineLimit": 100, // Limit displayed text-output lines. Default: extension/version-dependent.
+    "notebook.showCellStatusBar": "hidden", // hidden: more compact but wont show which language
+
+    // =============================================================================================
+    // SEARCH
+    // =============================================================================================
+
+    "search.exclude": {
+        "**/.ipynb_checkpoints": true, // Exclude notebook checkpoints.
+        "**/.venv": true, // Exclude environment packages from text search.
+        "**/__pycache__": true, // Exclude bytecode caches.
+        "**/data/**": true // Exclude data files from text search.
+    }, // Additional search exclusions.
+
+    // =============================================================================================
+    // DIAGNOSTICS
+    // =============================================================================================
+
+    "problems.autoReveal": true, // Automatically reveal the Problems panel. Default: true.
+
+    // =============================================================================================
+    // TERMINAL
+    // =============================================================================================
+
+    "terminal.integrated.cwd": "${workspaceFolder}", // Start new terminals in the workspace root. Default: "".
+
+    // =============================================================================================
+    // WINDOW
+    // =============================================================================================
+
+    "window.menuBarVisibility": "default", // Show the menu bar. Default: "default".
+    "window.titleBarStyle": "custom",
+    "window.zoomLevel": 0, // Window zoom level; 0 is default.
+
+    // =============================================================================================
+    // WORKBENCH
+    // =============================================================================================
+
+    // COLOUR CUSTOMISATION ---------------------------------------------------
+
+    "workbench.colorCustomizations": {
+        // "titleBar.activeBackground": "#7c7c7c7c", // grey
+        // "titleBar.activeBackground": "#00e5ff7b", // blue
+        // "titleBar.activeBackground": "#2fff007c", // green
+        // "titleBar.activeBackground": "#ffea007c", // yellow
+        // "titleBar.activeBackground": "#ff4fd982", // pink
+        // "titleBar.activeBackground": "#ff303078", // red
+        "titleBar.activeBackground": "#ff770075", // orange
+        // "titleBar.activeBackground": "#a955f789", // purple
+    },
+
+    // "workbench.colorCustomizations": {
+    // }
+    // TABS, NAVIGATION AND THEME ---------------------------------------------
+
+    // Optional themes; uncomment one and ensure its name is available.
+    "workbench.colorTheme": "Dark Modern",
+    // "workbench.colorTheme": "Default Dark Modern",
+    // "workbench.colorTheme": "Default Dark+",
+    // "workbench.colorTheme": "Default Light Modern",
+    // "workbench.colorTheme": "Default Light+",
+
+    "workbench.editor.enablePreview": false, // Open files in permanent tabs rather than replacing preview tabs. Default: true.
+    "workbench.editor.tabSizing": "shrink", // Shrink tabs to fit more files. Default: "fit".
+    "workbench.editor.wrapTabs": true, // Allow tabs to wrap onto multiple rows. Default: false.
+    // "workbench.sideBar.location": "right", // Place the sidebar on the right. Default: "left".
+    "workbench.statusBar.visible": true // Show the status bar. Default: true.
+}
