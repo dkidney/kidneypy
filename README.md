@@ -2,7 +2,7 @@
 
 Short description of what the package does and the problem it solves.
 
-![License](https://img.shields.io/github/license/username/repository)
+![License](https://img.shields.io/github/license/dkidney/kidneypy)
 ![CI](https://github.com/dkidney/kidneypy/actions/workflows/ci.yml/badge.svg)
 [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-teal.json)](https://github.com/copier-org/copier)
 
