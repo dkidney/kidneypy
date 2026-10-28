@@ -7,9 +7,8 @@ authors = [
 ]
 description = "Miscellaneous helpers"
 dependencies = [
-    "matplotlib>=3.11.2",
-    "numpy>=2.5.3",
     "pandas>=3.0.6",
+    "pydantic>=2.14.1",
 ]
 
 [dependency-groups]
@@ -43,7 +42,7 @@ exclude = [
 ]
 
 [tool.ruff.format]
-quote-style = "double"
+quote-style = "single"
 indent-style = "space"
 
 [tool.ruff.lint]
