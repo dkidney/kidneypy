@@ -56,7 +56,7 @@ class Profiler:
               dry_run:bool=True,
               verbose:bool=True,
               **kwargs,
-        ) -> None|pd.DataFrame:
+        ) -> None | pd.DataFrame:
         self.params = ProfileParams(**kwargs)
         report = self.report()
         # cols_to_drop = (
@@ -75,7 +75,7 @@ class Profiler:
         cols_to_drop = report.columns
         return self.df.loc[:, lambda d: ~d.columns.isin(cols_to_drop)]
 
-    def report(self):
+    def report(self) -> pd.DataFrame:
         return pd.DataFrame({
             'sparse': pd.Series('True', index=self._identify_sparse_cols()),
             'constant': pd.Series('True', index=self._identify_constant_cols()),
@@ -112,7 +112,7 @@ class Profiler:
 
 # _profile_df* -------------------------------------------------------------------------------------
 
-def _profile_df(df, max_rows: None|int = None):
+def _profile_df(df, max_rows: None|int = None) -> pd.DataFrame:
     _df = df
     if max_rows is not None:
         # max_rows = validate_positive_int(max_rows)
@@ -120,7 +120,7 @@ def _profile_df(df, max_rows: None|int = None):
             print()
             print(f'profiling the first {max_rows} rows - to profile more rows set the max_rows parameter')
             df = _df.iloc[0:max_rows, :]
-    prof = (df
+    return (df
         .dtypes
         .astype('string')
         .to_frame(name='dtype')
@@ -132,7 +132,6 @@ def _profile_df(df, max_rows: None|int = None):
         .pipe(_profile_df_n_inf, df)
         .pipe(_profile_df_memory_usage, df)
     )
-    return prof
 
 
 def _profile_df_missingness(profile: pd.DataFrame, df: pd.DataFrame) -> pd.DataFrame:
@@ -181,9 +180,20 @@ def _profile_df_distribution(profile: pd.DataFrame, df: pd.DataFrame) -> pd.Data
 
 
 def _profile_df_pd_describe_categorical(profile: pd.DataFrame, df: pd.DataFrame) -> pd.DataFrame:
+    pd_desc = df.select_dtypes(include=['object', 'str', 'category'])
+    if pd_desc.shape[1] == 0:
+        return (profile
+            .assign(
+                mode=pd.NA,
+                n_mode=pd.NA,
+                p_mode=pd.NA,
+            )
+        )
+
+    # cols = df.select_dtypes(include=['object', 'str', 'category'])
     pd_desc = (
         df
-        .describe(include=['object', 'str', 'category']).T
+        # .describe(include=['object', 'str', 'category']).T
         .assign(
             mode=lambda d: d['top'].astype('string'),
             n_mode=lambda d: d['freq'].astype("Int64"),

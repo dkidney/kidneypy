@@ -2,6 +2,7 @@ __version__ = '0.1.0'
 
 from . import df
 from .df import generate_example_df
+from .df.profiling import Profiler
 
 # from .df.df import (
 #     drop_constant_cols,
@@ -23,6 +24,7 @@ from .df import generate_example_df
 __all__ = [
     'df',
     "generate_example_df",
+    "Profiler",
     # 'drop_duplicated_rows',
     # 'drop_empty_rows',
     # 'drop_numeric_cols',

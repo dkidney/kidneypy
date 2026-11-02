@@ -19,12 +19,42 @@ Short description of what the package does and the problem it solves.
 brew install uv
 ```
 
-### Install from source
+### Install from GitHub
 
-```bash
-git clone https://github.com/dkidney/kidneypy.git
-cd kidneypy
-uv sync --dev
+#### Install into an environment
+
+From a specific release tag:
+
+```sh
+uv add "git+https://github.com/dkidney/kidneypy.git@v0.1.0"
+```
+
+From a specific branch:
+
+```sh
+uv add "git+https://github.com/dkidney/kidneypy.git@develop"
+```
+
+#### Add as a dependency in your pyproject.toml file
+
+```toml
+[project]
+dependencies = [
+    "kidneypy",
+]
+
+From a specific release tag:
+
+```toml
+[tool.uv.sources]
+kidneypy = { git = "https://github.com/dkidney/kidneypy.git", tag = "v0.1.0" }
+```
+
+From a specific branch:
+
+```toml
+[tool.uv.sources]
+kidneypy = { git = "https://github.com/dkidney/kidneypy.git", branch = "develop" }
 ```
 
 ## Quick Start
